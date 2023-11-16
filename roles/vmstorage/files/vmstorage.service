@@ -1,0 +1,16 @@
+[Unit]
+Description=VictoriaMetrics Storage server
+Documentation=https://github.com/VictoriaMetrics/VictoriaMetrics
+
+[Service]
+Restart=always
+User=vmstorage
+Group=vmstorage
+EnvironmentFile=/etc/sysconfig/vmstorage
+ExecStart=/usr/local/bin/vmstorage-prod $OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target

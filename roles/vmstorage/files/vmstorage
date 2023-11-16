@@ -1,0 +1,2 @@
+OPTIONS="-retentionPeriod=1
+         -storageDataPath=/var/lib/vmstorage"

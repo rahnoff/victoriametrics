@@ -1,0 +1,57 @@
+- name: Add VictoriaMetrics storage user
+  ansible.builtin.user:
+    name: vmstorage
+    comment: VictoriaMetrics storage user
+    shell: /bin/false
+    create_home: false
+
+- name: Download VictoriaMetrics cluster archive
+  ansible.builtin.get_url:
+    url: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.90.0/victoria-metrics-linux-amd64-v1.90.0-cluster.tar.gz
+    dest: /tmp
+
+- name: Extract an archive
+  ansible.builtin.unarchive:
+    src: /tmp/victoria-metrics-linux-amd64-v1.90.0-cluster.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Remove vminsert and vmselect binaries
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /usr/local/bin/vminsert-prod
+    - /usr/local/bin/vmselect-prod
+
+- name: Create a vmstorage data directory
+  ansible.builtin.file:
+    path: /var/lib/vmstorage
+    state: directory
+    owner: vmstorage
+    group: vmstorage
+    mode: '0755'
+
+- name: Copy vmstorage systemd unit and options files
+  ansible.builtin.copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+  loop:
+    - { src: 'vmstorage.service', dest: '/etc/systemd/system' }
+    - { src: 'vmstorage', dest: '/etc/sysconfig' }
+
+- name: Reread systemd configs
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start and enable vmstorage
+  ansible.builtin.systemd:
+    name: vmstorage
+    state: started
+    enabled: true
+    masked: no
+
+- name: Reload vmstorage
+  ansible.builtin.systemd:
+    name: vmstorage
+    state: reloaded

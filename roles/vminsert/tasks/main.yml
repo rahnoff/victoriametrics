@@ -1,0 +1,49 @@
+- name: Add VictoriaMetrics insert user
+  ansible.builtin.user:
+    name: vminsert
+    comment: VictoriaMetrics insert user
+    shell: /bin/false
+    create_home: false
+
+- name: Download VictoriaMetrics cluster archive
+  ansible.builtin.get_url:
+    url: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.90.0/victoria-metrics-linux-amd64-v1.90.0-cluster.tar.gz
+    dest: /tmp
+
+- name: Extract an archive
+  ansible.builtin.unarchive:
+    src: /tmp/victoria-metrics-linux-amd64-v1.90.0-cluster.tar.gz
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Remove vmstorage and vmselect binaries
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - /usr/local/bin/vmstorage-prod
+    - /usr/local/bin/vmselect-prod
+
+- name: Copy vminsert systemd unit and options files
+  ansible.builtin.copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+  loop:
+    - { src: 'vminsert.service', dest: '/etc/systemd/system' }
+    - { src: 'vminsert', dest: '/etc/sysconfig' }
+
+- name: Reread systemd configs
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start and enable vminsert
+  ansible.builtin.systemd:
+    name: vminsert
+    state: started
+    enabled: true
+    masked: no
+
+- name: Reload vminsert
+  ansible.builtin.systemd:
+    name: vminsert
+    state: reloaded

@@ -1,0 +1,13 @@
+---
+
+- hosts: vmstorage
+  roles:
+    - vmstorage
+
+- hosts: vminsert
+  roles:
+    - vminsert
+
+- hosts: vmselect
+  roles:
+    - vmselect

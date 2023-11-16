@@ -1,0 +1,16 @@
+[Unit]
+Description=VictoriaMetrics Insert Server
+Documentation=https://github.com/VictoriaMetrics/VictoriaMetrics
+
+[Service]
+Restart=always
+User=vminsert
+Group=vminsert
+EnvironmentFile=/etc/sysconfig/vminsert
+ExecStart=/usr/local/bin/vminsert-prod $OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target
